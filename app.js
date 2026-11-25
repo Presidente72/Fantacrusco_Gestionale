@@ -205,6 +205,8 @@ function classifica() {
 /* ======================= ACCESSI ======================= */
 const emailOf = id => `${id.trim().toLowerCase()}@${EMAIL_DOMAIN}`;
 async function api(body) {
+  const { data: sd } = await sb.auth.getSession();          // token sempre aggiornato (si rinnova ogni ora)
+  if (sd.session) SESSION = sd.session;
   const r = await fetch('/api/admin-users', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESSION.access_token }, body: JSON.stringify(body) });
   let j = {}; try { j = await r.json(); } catch (e) {}
   if (!r.ok) throw new Error(j.error || `Errore ${r.status}`);
