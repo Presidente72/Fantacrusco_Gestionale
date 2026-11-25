@@ -17,7 +17,13 @@ export default async function handler(req, res) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ error: 'Sessione mancante: rientra.' });
   const { data: ud, error: ue } = await admin.auth.getUser(token);
-  if (ue || !ud?.user) return res.status(401).json({ error: 'Sessione scaduta: rientra.' });
+  if (ue || !ud?.user) {
+    const det = ue?.message || 'utente non trovato';
+    const chiave = /api key|apikey|invalid.*key|unauthorized/i.test(det);
+    return res.status(401).json({ error: chiave
+      ? `La chiave segreta su Vercel non è accettata da Supabase (${det}). Controlla SUPABASE_SECRET_KEY: deve iniziare con sb_secret_ e appartenere a questo progetto.`
+      : `Sessione non riconosciuta (${det}). Esci e rientra; se il problema resta, controlla SUPABASE_URL e SUPABASE_SECRET_KEY su Vercel.` });
+  }
   const { data: me } = await admin.from('profiles').select('role, attivo').eq('user_id', ud.user.id).maybeSingle();
   if (!me || me.role !== 'admin' || !me.attivo) return res.status(403).json({ error: 'Solo il presidente può gestire gli accessi.' });
 
